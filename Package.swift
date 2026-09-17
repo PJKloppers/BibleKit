@@ -4,7 +4,7 @@ import PackageDescription
 
 let package = Package(
     name: "BibleKit",
-    platforms: [.iOS(.v17), .macOS(.v14)],
+    platforms: [.iOS(.v17), .macOS(.v14), .visionOS(.v1)],
     products: [
         .library(name: "BibleKit", targets: ["BibleKit"])
     ],
