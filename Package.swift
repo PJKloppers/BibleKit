@@ -36,5 +36,9 @@ let package = Package(
             name: "BibleKitDBTests",
             dependencies: ["BibleKitDB"]
         ),
+        .testTarget(
+            name: "BibleKitTests",
+            dependencies: ["BibleKit"]
+        ),
     ]
 )
