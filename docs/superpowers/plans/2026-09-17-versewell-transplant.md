@@ -345,11 +345,11 @@ final class VerseDataSourceTests: XCTestCase {
         try await dataSource.registerTranslation(TranslationEntity(id: "kjv", name: "King James Version", language: "en"))
         try await dataSource.registerTranslation(TranslationEntity(id: "other", name: "Other", language: "en"))
         try await dataSource.insertVerses([
-            VerseEntity(translationId: "kjv", id: "1:1:1", text: "unique-word-kjv"),
-            VerseEntity(translationId: "other", id: "1:1:1", text: "unique-word-kjv"),
+            VerseEntity(translationId: "kjv", id: "1:1:1", text: "onlyinbothtranslations"),
+            VerseEntity(translationId: "other", id: "1:1:1", text: "onlyinbothtranslations"),
         ])
 
-        let results = try await dataSource.searchVerses(translationId: "kjv", text: "unique-word-kjv", limit: Int.max, offset: 0)
+        let results = try await dataSource.searchVerses(translationId: "kjv", text: "onlyinbothtranslations", limit: Int.max, offset: 0)
 
         XCTAssertEqual(results.count, 1)
     }
