@@ -1,0 +1,3 @@
+[submodule "Sources/BibleKit/Resources/Holy-Bible-XML-Format"]
+	path = Sources/BibleKit/Resources/Holy-Bible-XML-Format
+	url = https://github.com/PJKloppers/Holy-Bible-XML-Format.git
