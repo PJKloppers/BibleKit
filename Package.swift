@@ -6,10 +6,13 @@ let package = Package(
     name: "BibleKit",
     platforms: [.iOS(.v17), .macOS(.v14), .visionOS(.v1)],
     products: [
-        .library(name: "BibleKit", targets: ["BibleKit"])
+        .library(name: "BibleKit", targets: ["BibleKit"]),
+        .library(name: "BibleKitDB", targets: ["BibleKitDB"]),
     ],
     dependencies: {
-        var dependencies: [Package.Dependency] = []
+        var dependencies: [Package.Dependency] = [
+            .package(url: "https://github.com/groue/GRDB.swift.git", from: "7.0.0"),
+        ]
         #if !os(iOS)
         dependencies.append(
             .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
@@ -20,7 +23,18 @@ let package = Package(
     targets: [
         .target(
             name: "BibleKit",
+            dependencies: ["BibleKitDB"],
             resources: [.copy("Resources/Holy-Bible-XML-Format/Afrikaans2020Bible.xml")]
-        )
+        ),
+        .target(
+            name: "BibleKitDB",
+            dependencies: [
+                .product(name: "GRDB", package: "GRDB.swift"),
+            ]
+        ),
+        .testTarget(
+            name: "BibleKitDBTests",
+            dependencies: ["BibleKitDB"]
+        ),
     ]
 )
