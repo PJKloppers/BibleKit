@@ -13,12 +13,27 @@ public final class BibleReaderModel {
         case failed(String)
     }
 
+    private static let translationDefaultsKey = "BibleReaderModel.selectedTranslation"
+    private static let defaultTranslation = TranslationID("afrikaans-2020")
+
     public private(set) var state: LoadState = .idle
-    public let translation = TranslationID("afrikaans-2020")
+    public private(set) var availableTranslations: [Translation] = []
+
+    public private(set) var translation: TranslationID {
+        didSet {
+            UserDefaults.standard.set(translation.rawValue, forKey: Self.translationDefaultsKey)
+        }
+    }
 
     private var provider: BibleProvider?
 
-    public init() {}
+    public init() {
+        if let saved = UserDefaults.standard.string(forKey: Self.translationDefaultsKey) {
+            translation = TranslationID(saved)
+        } else {
+            translation = Self.defaultTranslation
+        }
+    }
 
     public func load() {
         guard state != .loaded else { return }
@@ -27,8 +42,17 @@ public final class BibleReaderModel {
             state = .failed("Bundled Bible database not found.")
             return
         }
-        provider = BibleProvider.create(url: url)
+        let provider = BibleProvider.create(url: url)
+        self.provider = provider
         state = .loaded
+        Task {
+            availableTranslations = (try? await provider.translations()) ?? []
+        }
+    }
+
+    public func selectTranslation(_ id: TranslationID) {
+        guard id != translation else { return }
+        translation = id
     }
 
     public func displayName(for book: Book) -> String {

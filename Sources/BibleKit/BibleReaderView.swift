@@ -26,8 +26,31 @@ public struct BibleReaderView: View {
             .navigationDestination(for: ChapterReference.self) { chapter in
                 ChapterDetailView(model: model, chapter: chapter)
             }
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    translationMenu
+                }
+            }
         }
         .task { model.load() }
+    }
+
+    @ViewBuilder
+    private var translationMenu: some View {
+        if model.availableTranslations.count > 1 {
+            Menu {
+                Picker("Translation", selection: Binding(
+                    get: { model.translation },
+                    set: { model.selectTranslation($0) }
+                )) {
+                    ForEach(model.availableTranslations) { translation in
+                        Text(translation.name).tag(translation.id)
+                    }
+                }
+            } label: {
+                Label("Translation", systemImage: "globe")
+            }
+        }
     }
 
     private var oldTestamentBooks: [Book] { BookCollection.oldTestamentBooks }
@@ -140,7 +163,12 @@ private struct ChapterDetailView: View {
             }
         }
         .navigationTitle("\(model.displayName(for: BookCollection.mapping[chapter.bookName]!)) \(chapter.index)")
-        .task(id: chapter) { await loadVerses() }
+        .task(id: ReloadKey(chapter: chapter, translation: model.translation)) { await loadVerses() }
+    }
+
+    private struct ReloadKey: Equatable {
+        let chapter: ChapterReference
+        let translation: TranslationID
     }
 
     private func loadVerses() async {
