@@ -24,7 +24,11 @@ let package = Package(
         .target(
             name: "BibleKit",
             dependencies: ["BibleKitDB"],
-            resources: [.copy("Resources/Holy-Bible-XML-Format/Afrikaans2020Bible.xml")]
+            resources: [.copy("Resources/bible.db")]
+        ),
+        .executableTarget(
+            name: "GenerateBundledDB",
+            dependencies: ["BibleKit"]
         ),
         .target(
             name: "BibleKitDB",
