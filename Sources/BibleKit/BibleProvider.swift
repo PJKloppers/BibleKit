@@ -98,4 +98,9 @@ public final class BibleProvider: Sendable {
     public func translations() async throws -> [Translation] {
         try await store.translations()
     }
+
+    @discardableResult
+    public func importXML(url: URL, translationID: TranslationID, displayName: String, language: String) async throws -> Translation {
+        try await store.importXML(url: url, translationID: translationID, displayName: displayName, language: language)
+    }
 }

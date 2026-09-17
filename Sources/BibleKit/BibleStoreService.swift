@@ -7,4 +7,5 @@ protocol BibleStoreService: Sendable {
     func getVerses(translation: TranslationID, verseIDs: [VerseID], limit: Int, offset: Int) async throws -> [Verse]
     func getVersesInRange(translation: TranslationID, startVerseID: VerseID, endVerseID: VerseID, limit: Int, offset: Int) async throws -> [Verse]
     func translations() async throws -> [Translation]
+    func importXML(url: URL, translationID: TranslationID, displayName: String, language: String) async throws -> Translation
 }

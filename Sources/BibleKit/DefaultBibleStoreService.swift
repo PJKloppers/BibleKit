@@ -56,4 +56,11 @@ final class DefaultBibleStoreService: BibleStoreService, Sendable {
         let entities = try await provider.translations()
         return entities.map { Translation(id: TranslationID($0.id), name: $0.name, language: $0.language) }
     }
+
+    func importXML(url: URL, translationID: TranslationID, displayName: String, language: String) async throws -> Translation {
+        let verses = try BibleXMLImporter.parse(url: url, translationId: translationID.rawValue)
+        try await provider.registerTranslation(TranslationEntity(id: translationID.rawValue, name: displayName, language: language))
+        try await provider.insertVerses(verses)
+        return Translation(id: translationID, name: displayName, language: language)
+    }
 }
