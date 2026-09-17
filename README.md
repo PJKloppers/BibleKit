@@ -1,7 +1,7 @@
 # BibleKit
 
-A small Swift package with everything needed to read a Bible translation in a SwiftUI app: the
-data models, an XML parser, an observable view model, and a ready-to-use reading screen.
+A Swift package with everything needed to read and search a Bible translation in a SwiftUI app:
+a GRDB/SQLite-backed database layer, an async provider API, and a ready-to-use reading screen.
 
 Built to be shared between [BibleReader](https://github.com/PJKloppers/BibleReader) (a standalone
 reading app) and [Delta](https://github.com/PJKloppers/Delta), so the parsing and UI code lives in
@@ -9,18 +9,25 @@ one place instead of being duplicated across apps.
 
 ## What's inside
 
-- `BibleModels.swift` — `BibleBook`, `BibleChapter`, `BibleVerse`, `BibleTestament`
-- `BibleParser.swift` — a streaming `XMLParser`-based parser for the
-  [Holy-Bible-XML-Format](https://github.com/PJKloppers/Holy-Bible-XML-Format) dataset
-- `BibleReaderModel.swift` — an `@Observable` view model that loads a translation off the main actor
-- `BibleReaderView.swift` — a `NavigationStack`-based book → chapter → verses reading screen
+- `BibleKitDB` — GRDB/SQLite persistence for a shared, multi-translation database
+- `Model/` — `Verse`, `VerseID`, `Book`, `BookName`, `Translation`, `Reference`,
+  `ChapterReference`, `VerseReference`, `SelectedVerseRange`
+- `BibleProvider` — async search, chapter/book/verse fetch, and `importXML` for
+  adding translations on-device
+- `BibleXMLImporter` — parses a
+  [Holy-Bible-XML-Format](https://github.com/PJKloppers/Holy-Bible-XML-Format) file
+  into database rows
+- `BibleReaderModel` / `BibleReaderView` — an `@Observable` load-state view model and a
+  ready-to-use book → chapter → verses reading screen
 
 ## Data source
 
-The Bible text lives in `Sources/BibleKit/Resources/Holy-Bible-XML-Format`, a git submodule of the
-[Holy-Bible-XML-Format fork](https://github.com/PJKloppers/Holy-Bible-XML-Format). BibleKit bundles
-one translation (Afrikaans 2020) as a package resource via `Bundle.module`, so consuming apps get a
-working Bible out of the box with no extra setup.
+BibleKit bundles a pre-built `bible.db` (package resource, via `Bundle.module`) covering two
+translations out of the box: `"afrikaans-2020"` (default) and `"english-kjv"`. Both were generated
+from `Sources/BibleKit/Resources/Holy-Bible-XML-Format`, a git submodule of the
+[Holy-Bible-XML-Format fork](https://github.com/PJKloppers/Holy-Bible-XML-Format), via
+`scripts/generate-bundled-db.sh`. The submodule stays in the repo as the import source for that
+script and for any consuming app that wants to `importXML` further translations at runtime.
 
 Clone with submodules:
 
@@ -48,8 +55,17 @@ struct ContentView: View {
 }
 ```
 
-Or use the pieces directly — `BibleParser.parseBundled()` returns the parsed translation and
-books, and `BibleReaderModel` wraps that in an observable load state for your own UI.
+Or use `BibleProvider` directly:
+
+```swift
+import BibleKit
+
+let provider = BibleProvider.create(url: Bundle.module.url(forResource: "bible", withExtension: "db")!)
+let results = try await provider.search(translation: TranslationID("afrikaans-2020"), query: "liefde")
+```
+
+Import another Holy-Bible-XML-Format file at runtime with
+`provider.importXML(url:translationID:displayName:language:)`.
 
 ## Credits
 

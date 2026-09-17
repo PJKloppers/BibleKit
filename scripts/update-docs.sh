@@ -16,11 +16,13 @@ echo "Backing up landing page and CNAME..."
 cp docs/index.html "$TMP_DIR/index.html"
 cp docs/CNAME "$TMP_DIR/CNAME"
 
-echo "Generating documentation for BibleKit..."
+echo "Generating documentation for BibleKit and BibleKitDB..."
 swift package --disable-sandbox generate-documentation \
     --warnings-as-errors \
     --symbol-graph-minimum-access-level package \
+    --enable-experimental-combined-documentation \
     --target BibleKit \
+    --target BibleKitDB \
     --output-path ./docs \
     --transform-for-static-hosting
 
