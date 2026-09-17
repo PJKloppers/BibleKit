@@ -50,3 +50,10 @@ struct ContentView: View {
 
 Or use the pieces directly — `BibleParser.parseBundled()` returns the parsed translation and
 books, and `BibleReaderModel` wraps that in an observable load state for your own UI.
+
+## Credits
+
+BibleKit's database layer and provider API are adapted from
+[VerseWell/BibleKit-swift](https://github.com/VerseWell/BibleKit-swift)
+(Apache License 2.0), extended here to support multiple translations in one
+shared database and to import additional translations on-device.
