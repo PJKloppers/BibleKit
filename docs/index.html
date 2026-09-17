@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BibleKit — a shared Swift package for Bible reading</title>
+<meta name="description" content="BibleKit is a Swift package with models, an XML parser, and a ready-to-use SwiftUI screen for reading a Bible translation.">
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fbfaf7;
+    --bg-raised: #ffffff;
+    --text: #1c1a17;
+    --text-dim: #6b655c;
+    --border: #e7e2d9;
+    --accent: #8a5a3b;
+    --accent-text: #ffffff;
+    --code-bg: #f2efe8;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16140f;
+      --bg-raised: #1e1b15;
+      --text: #f2ede3;
+      --text-dim: #a59d8d;
+      --border: #332d23;
+      --accent: #d99a6c;
+      --accent-text: #16140f;
+      --code-bg: #221e17;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.55;
+  }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  header.hero {
+    padding: 88px 0 56px;
+    border-bottom: 1px solid var(--border);
+  }
+  .kicker {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.1rem, 5vw, 3rem);
+    line-height: 1.1;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    font-size: 1.15rem;
+    color: var(--text-dim);
+    max-width: 54ch;
+    margin: 0 0 32px;
+  }
+  .cta-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: transform 0.12s ease, opacity 0.12s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: var(--accent-text); }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--bg-raised); }
+
+  main { padding: 56px 0 40px; }
+  section { margin-bottom: 52px; }
+  section:last-child { margin-bottom: 0; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    margin: 0 0 18px;
+  }
+  p { margin: 0 0 14px; color: var(--text); }
+  p.dim { color: var(--text-dim); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .card h3 {
+    font-size: 0.95rem;
+    margin: 0 0 6px;
+    font-family: var(--sans);
+    font-weight: 600;
+  }
+  .card code {
+    font-size: 0.8rem;
+    color: var(--accent);
+  }
+  .card p {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin: 0;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  :not(pre) > code {
+    background: var(--code-bg);
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+
+  .list { margin: 0; padding: 0; list-style: none; }
+  .list li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: baseline;
+  }
+  .list li:last-child { border-bottom: none; }
+  .list .name { font-weight: 600; }
+  .list .desc { color: var(--text-dim); font-size: 0.92rem; text-align: right; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 0 48px;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  footer a { color: var(--text-dim); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Swift Package</p>
+    <h1>Read a Bible translation in SwiftUI, without writing the plumbing twice.</h1>
+    <p class="lede">
+      BibleKit bundles the models, an XML parser, an observable view model, and a ready-to-use
+      reading screen — one place for Bible-reading code shared across apps, instead of copy-pasted
+      into each one.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/PJKloppers/BibleKit">View on GitHub</a>
+      <a class="btn btn-ghost" href="#usage">Usage</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <section>
+      <h2>What's inside</h2>
+      <ul class="list">
+        <li>
+          <span class="name">BibleModels</span>
+          <span class="desc"><code>BibleBook</code>, <code>BibleChapter</code>, <code>BibleVerse</code>, <code>BibleTestament</code></span>
+        </li>
+        <li>
+          <span class="name">BibleParser</span>
+          <span class="desc">Streaming <code>XMLParser</code>-based parser</span>
+        </li>
+        <li>
+          <span class="name">BibleReaderModel</span>
+          <span class="desc">An <code>@Observable</code> load-state view model</span>
+        </li>
+        <li>
+          <span class="name">BibleReaderView</span>
+          <span class="desc">Book → chapter → verses reading screen</span>
+        </li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Data source</h2>
+      <p>
+        The text lives in a git submodule of
+        <a href="https://github.com/PJKloppers/Holy-Bible-XML-Format">Holy-Bible-XML-Format</a>,
+        a dataset covering hundreds of translations across most written languages. BibleKit bundles
+        the Afrikaans 2020 translation as a package resource via <code>Bundle.module</code>, so
+        consuming apps get a working Bible out of the box, with no extra setup.
+      </p>
+    </section>
+
+    <section id="usage">
+      <h2>Usage</h2>
+      <p>Add BibleKit as a Swift package dependency, then drop in the reading screen:</p>
+      <pre><code>import BibleKit
+
+struct ContentView: View {
+    var body: some View {
+        BibleReaderView()
+    }
+}</code></pre>
+      <p class="dim">
+        Or use the pieces directly — <code>BibleParser.parseBundled()</code> returns the parsed
+        translation and books, and <code>BibleReaderModel</code> wraps that in an observable load
+        state for your own UI.
+      </p>
+    </section>
+
+    <section>
+      <h2>Clone with submodules</h2>
+      <pre><code>git clone --recurse-submodules https://github.com/PJKloppers/BibleKit.git</code></pre>
+      <p class="dim">Already cloned? <code>git submodule update --init --recursive</code></p>
+    </section>
+
+    <section>
+      <h2>Built to be shared</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>BibleReader</h3>
+          <p>A standalone Bible reading app for macOS.</p>
+        </div>
+        <div class="card">
+          <h3>Delta</h3>
+          <p>A habit and goal tracking app with a Bible tab.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; width:100%;">
+    <span>BibleKit</span>
+    <span><a href="https://github.com/PJKloppers/BibleKit">github.com/PJKloppers/BibleKit</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
