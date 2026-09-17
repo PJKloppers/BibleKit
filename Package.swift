@@ -8,6 +8,15 @@ let package = Package(
     products: [
         .library(name: "BibleKit", targets: ["BibleKit"])
     ],
+    dependencies: {
+        var dependencies: [Package.Dependency] = []
+        #if !os(iOS)
+        dependencies.append(
+            .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
+        )
+        #endif
+        return dependencies
+    }(),
     targets: [
         .target(
             name: "BibleKit",
