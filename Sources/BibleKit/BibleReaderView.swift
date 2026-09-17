@@ -36,19 +36,46 @@ public struct BibleReaderView: View {
         .task { model.load() }
     }
 
+    private var oldTestamentBooks: [BibleBook] {
+        model.books.filter { $0.testament == .old }
+    }
+
+    private var newTestamentBooks: [BibleBook] {
+        model.books.filter { $0.testament == .new }
+    }
+
     private var bookList: some View {
         List {
-            Section("Old Testament") {
-                ForEach(model.books.filter { $0.testament == .old }) { book in
+            Section {
+                ForEach(oldTestamentBooks) { book in
                     NavigationLink(value: book.id) { bookRow(book) }
                 }
+            } header: {
+                testamentHeader("Old Testament", count: oldTestamentBooks.count)
             }
-            Section("New Testament") {
-                ForEach(model.books.filter { $0.testament == .new }) { book in
+            Section {
+                ForEach(newTestamentBooks) { book in
                     NavigationLink(value: book.id) { bookRow(book) }
                 }
+            } header: {
+                testamentHeader("New Testament", count: newTestamentBooks.count)
             }
         }
+    }
+
+    private func testamentHeader(_ title: String, count: Int) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(.subheadline, design: .serif))
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+            Spacer()
+            Text("\(count) books")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .textCase(nil)
+        .padding(.vertical, 4)
     }
 
     private func bookRow(_ book: BibleBook) -> some View {
