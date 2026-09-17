@@ -1,11 +1,5 @@
 import SwiftUI
 
-/// A pushed chapter: the book and chapter the reader is showing.
-private struct BibleChapterRef: Hashable {
-    let book: Int
-    let chapter: Int
-}
-
 /// A simple, self-contained Bible reading screen: book list -> chapter list -> chapter text.
 /// Loads the translation bundled with BibleKit; drop this view into any SwiftUI app.
 public struct BibleReaderView: View {
@@ -26,36 +20,31 @@ public struct BibleReaderView: View {
                 }
             }
             .navigationTitle("Bible")
-            .navigationDestination(for: Int.self) { bookID in
-                chapterList(for: bookID)
+            .navigationDestination(for: BookName.self) { bookName in
+                chapterList(for: bookName)
             }
-            .navigationDestination(for: BibleChapterRef.self) { ref in
-                chapterView(ref)
+            .navigationDestination(for: ChapterReference.self) { chapter in
+                ChapterDetailView(model: model, chapter: chapter)
             }
         }
         .task { model.load() }
     }
 
-    private var oldTestamentBooks: [BibleBook] {
-        model.books.filter { $0.testament == .old }
-    }
-
-    private var newTestamentBooks: [BibleBook] {
-        model.books.filter { $0.testament == .new }
-    }
+    private var oldTestamentBooks: [Book] { BookCollection.oldTestamentBooks }
+    private var newTestamentBooks: [Book] { BookCollection.newTestamentBooks }
 
     private var bookList: some View {
         List {
             Section {
-                ForEach(oldTestamentBooks) { book in
-                    NavigationLink(value: book.id) { bookRow(book) }
+                ForEach(oldTestamentBooks, id: \.bookName) { book in
+                    NavigationLink(value: book.bookName) { bookRow(book) }
                 }
             } header: {
                 testamentHeader("Old Testament", count: oldTestamentBooks.count)
             }
             Section {
-                ForEach(newTestamentBooks) { book in
-                    NavigationLink(value: book.id) { bookRow(book) }
+                ForEach(newTestamentBooks, id: \.bookName) { book in
+                    NavigationLink(value: book.bookName) { bookRow(book) }
                 }
             } header: {
                 testamentHeader("New Testament", count: newTestamentBooks.count)
@@ -78,52 +67,64 @@ public struct BibleReaderView: View {
         .padding(.vertical, 4)
     }
 
-    private func bookRow(_ book: BibleBook) -> some View {
+    private func bookRow(_ book: Book) -> some View {
         HStack {
-            Text(book.name)
+            Text(model.displayName(for: book))
             Spacer()
-            Text("\(book.chapters.count) chapters")
+            Text("\(book.totalChapters) chapters")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
     }
 
-    private func chapterList(for bookID: Int) -> some View {
-        List {
-            if let book = model.books.first(where: { $0.id == bookID }) {
-                ForEach(book.chapters) { chapter in
-                    NavigationLink(value: BibleChapterRef(book: book.id, chapter: chapter.id)) {
-                        HStack {
-                            Text("Chapter \(chapter.id)")
-                            Spacer()
-                            Text("\(chapter.verses.count) verses")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+    private func chapterList(for bookName: BookName) -> some View {
+        let book = BookCollection.mapping[bookName]!
+        return List {
+            ForEach(1...book.totalChapters, id: \.self) { chapterIndex in
+                let chapter = ChapterReference(bookName: bookName, index: chapterIndex)
+                NavigationLink(value: chapter) {
+                    HStack {
+                        Text("Chapter \(chapterIndex)")
+                        Spacer()
+                        Text("\(book.totalVerses(chapter: chapterIndex)) verses")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
         }
-        .navigationTitle(model.books.first { $0.id == bookID }?.name ?? "")
+        .navigationTitle(model.displayName(for: book))
     }
+}
 
-    private func chapterView(_ ref: BibleChapterRef) -> some View {
+/// Fetches and displays one chapter's verses on demand.
+private struct ChapterDetailView: View {
+    let model: BibleReaderModel
+    let chapter: ChapterReference
+
+    @State private var verses: [Verse] = []
+    @State private var loadError: String?
+
+    var body: some View {
         ScrollView {
-            if let book = model.books.first(where: { $0.id == ref.book }),
-               let chapter = book.chapters.first(where: { $0.id == ref.chapter }) {
+            if let loadError {
+                ContentUnavailableView("Can't load this chapter", systemImage: "exclamationmark.triangle", description: Text(loadError))
+            } else if verses.isEmpty {
+                ProgressView()
+            } else {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text(book.name)
+                    Text(model.displayName(for: BookCollection.mapping[chapter.bookName]!))
                         .font(.system(.largeTitle, design: .serif))
                         .bold()
-                    Text("Chapter \(chapter.id)")
+                    Text("Chapter \(chapter.index)")
                         .font(.system(.title3, design: .serif))
                         .foregroundStyle(.secondary)
 
                     Divider()
 
-                    ForEach(chapter.verses) { verse in
+                    ForEach(verses, id: \.id) { verse in
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text("\(verse.id)")
+                            Text("\(verse.id.chapterVerseNumbers().last ?? 0)")
                                 .font(.callout.monospacedDigit())
                                 .foregroundStyle(.secondary)
                                 .frame(width: 28, alignment: .trailing)
@@ -138,7 +139,17 @@ public struct BibleReaderView: View {
                 .padding()
             }
         }
-        .navigationTitle("\(model.books.first { $0.id == ref.book }?.name ?? "") \(ref.chapter)")
+        .navigationTitle("\(model.displayName(for: BookCollection.mapping[chapter.bookName]!)) \(chapter.index)")
+        .task(id: chapter) { await loadVerses() }
+    }
+
+    private func loadVerses() async {
+        loadError = nil
+        do {
+            verses = try await model.verses(chapter: chapter)
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 }
 
