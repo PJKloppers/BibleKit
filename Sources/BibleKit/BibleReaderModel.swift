@@ -1,7 +1,8 @@
 import Foundation
 import Observation
 
-/// Parses the bundled translation off the main actor, then publishes the result back on it.
+/// Opens the bundled translation via BibleProvider, then serves chapters on demand
+/// instead of holding the whole Bible in memory.
 @Observable
 @MainActor
 public final class BibleReaderModel {
@@ -13,35 +14,31 @@ public final class BibleReaderModel {
     }
 
     public private(set) var state: LoadState = .idle
-    public private(set) var translation = ""
-    public private(set) var books: [BibleBook] = []
+    public let translation = TranslationID("afrikaans-2020")
 
-    private var loadTask: Task<Void, Never>?
+    private var provider: BibleProvider?
 
     public init() {}
 
     public func load() {
-        guard state != .loaded, loadTask == nil else { return }
+        guard state != .loaded else { return }
         state = .loading
-        loadTask = Task.detached(priority: .userInitiated) { [weak self] in
-            do {
-                let parsed = try BibleParser.parseBundled()
-                await self?.finishLoad(.success(parsed))
-            } catch {
-                await self?.finishLoad(.failure(error))
-            }
+        guard let url = Bundle.module.url(forResource: "bible", withExtension: "db") else {
+            state = .failed("Bundled Bible database not found.")
+            return
         }
+        provider = BibleProvider.create(url: url)
+        state = .loaded
     }
 
-    private func finishLoad(_ result: Result<(translation: String, books: [BibleBook]), Error>) {
-        loadTask = nil
-        switch result {
-        case .success(let parsed):
-            translation = parsed.translation
-            books = parsed.books
-            state = .loaded
-        case .failure(let error):
-            state = .failed(error.localizedDescription)
+    public func displayName(for book: Book) -> String {
+        BookDisplayNames.name(for: book.bookName, translation: translation)
+    }
+
+    public func verses(chapter: ChapterReference) async throws -> [Verse] {
+        guard let provider else {
+            throw CocoaError(.fileNoSuchFile)
         }
+        return try await provider.chapter(translation: translation, chapter: chapter)
     }
 }
