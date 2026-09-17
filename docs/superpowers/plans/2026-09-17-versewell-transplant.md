@@ -1628,7 +1628,7 @@ git commit -m "Add BibleXMLImporter for Holy-Bible-XML-Format files"
 Create `Tests/BibleKitTests/DefaultBibleStoreServiceTests.swift`:
 
 ```swift
-import BibleKitDB
+@testable import BibleKitDB
 import XCTest
 @testable import BibleKit
 
@@ -1790,7 +1790,7 @@ git commit -m "Add BibleStoreService and DefaultBibleStoreService"
 Create `Tests/BibleKitTests/BibleProviderTests.swift`:
 
 ```swift
-import BibleKitDB
+@testable import BibleKitDB
 import XCTest
 @testable import BibleKit
 
